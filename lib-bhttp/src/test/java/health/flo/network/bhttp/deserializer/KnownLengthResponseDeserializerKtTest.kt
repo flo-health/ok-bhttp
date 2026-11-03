@@ -2,6 +2,8 @@ package health.flo.network.bhttp.deserializer
 
 import health.flo.network.bhttp.ResponseDataFactory.knownLengthResponseHex
 import health.flo.network.bhttp.ResponseDataFactory.knownLengthResponseTrimmedHex
+import health.flo.network.bhttp.ResponseDataFactory.knownLengthResponseWithoutContentAndTrailerSectionHex
+import health.flo.network.bhttp.ResponseDataFactory.knownLengthResponseWithoutTrailerSectionHex
 import health.flo.network.bhttp.model.FieldLine
 import health.flo.network.bhttp.model.FieldSection
 import health.flo.network.bhttp.model.KnownLengthResponse.Companion.FRAMING_INDICATOR
@@ -43,6 +45,35 @@ internal class KnownLengthResponseDeserializerKtTest {
 
         assertThat(framingIndicator).isEqualTo(expectedFramingIndicator)
         assertThat(actual.controlData.statusCode).isEqualTo(expectedStatusCode)
+        assertThat(actual.headerSection).isEqualTo(expectedHeaderSection)
+        assertThat(actual.content).isEmpty()
+        assertThat(actual.trailerSection.fieldLines).isEmpty()
+    }
+
+    @Test
+    fun `readKnownLengthResponse should treat omitted trailer section as empty`() {
+        val responseHex = knownLengthResponseWithoutTrailerSectionHex()
+        val reader = ByteArrayReader.fromByteArray(responseHex.parseHexEncodedByteArray())
+
+        reader.readInt()
+        val actual = reader.readKnownLengthResponse()
+
+        assertThat(actual.controlData.statusCode).isEqualTo(200)
+        assertThat(actual.headerSection.fieldLines).isEmpty()
+        assertThat(String(actual.content, Charsets.US_ASCII)).isEqualTo("text")
+        assertThat(actual.trailerSection.fieldLines).isEmpty()
+    }
+
+    @Test
+    fun `readKnownLengthResponse should treat omitted content and trailer section as empty`() {
+        val responseHex = knownLengthResponseWithoutContentAndTrailerSectionHex()
+        val reader = ByteArrayReader.fromByteArray(responseHex.parseHexEncodedByteArray())
+        val expectedHeaderSection = FieldSection(listOf(FieldLine("header", "text")))
+
+        reader.readInt()
+        val actual = reader.readKnownLengthResponse()
+
+        assertThat(actual.controlData.statusCode).isEqualTo(200)
         assertThat(actual.headerSection).isEqualTo(expectedHeaderSection)
         assertThat(actual.content).isEmpty()
         assertThat(actual.trailerSection.fieldLines).isEmpty()
