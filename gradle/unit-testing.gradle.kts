@@ -1,10 +1,15 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.kotlin.dsl.getByType
+
 val testImplementation by configurations
 val testRuntimeOnly by configurations
+val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 dependencies {
-    testRuntimeOnly(libs.testing.junit5.engine)
+    testRuntimeOnly(libs.findLibrary("testing.junit5.engine").get())
+    testRuntimeOnly(libs.findLibrary("testing.junit5.launcher").get())
 
-    testImplementation(libs.bundles.testing.junit5)
-    testImplementation(libs.bundles.testing.mockito)
-    testImplementation(libs.testing.assertj)
+    testImplementation(libs.findBundle("testing.junit5").get())
+    testImplementation(libs.findBundle("testing.mockito").get())
+    testImplementation(libs.findLibrary("testing.assertj").get())
 }
