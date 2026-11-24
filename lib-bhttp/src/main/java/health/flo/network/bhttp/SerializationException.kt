@@ -4,6 +4,8 @@ open class SerializationException(message: String, cause: Throwable? = null) : E
 
 class NumberOutOfRangeException : SerializationException("Specified number is out of range 0..4611686018427387903")
 
+class DuplexBodyException : SerializationException("A duplex request body can't be encoded as known-length BHTTP")
+
 class EndOfArrayException : SerializationException("Unable to read the next bytes from the array")
 
 class UnknownFramingIndicatorException(

@@ -1,28 +1,20 @@
 package health.flo.network.bhttp.mappers
 
+import health.flo.network.bhttp.DuplexBodyException
 import okhttp3.RequestBody
-import okio.buffer
-import okio.sink
-import java.io.ByteArrayOutputStream
+import okio.Buffer
 
 internal class HttpBodyMapper {
 
     fun map(body: RequestBody): ByteArray {
-        val length = body.contentLength().toInt()
-
-        if (length <= 0) {
-            return byteArrayOf()
+        // A duplex body writes to the sink after writeTo returns, so the buffer would miss it.
+        if (body.isDuplex()) {
+            throw DuplexBodyException()
         }
 
-        val stream = ByteArrayOutputStream(length)
+        val buffer = Buffer()
+        body.writeTo(buffer)
 
-        stream.sink()
-            .buffer()
-            .use { bufferedSink ->
-                body.writeTo(bufferedSink)
-                bufferedSink.flush()
-
-                return stream.toByteArray()
-            }
+        return buffer.readByteArray()
     }
 }

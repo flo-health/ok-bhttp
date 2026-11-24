@@ -80,6 +80,11 @@ Known-Length_ Messages only and two possible translations that are required by c
 
 ## Limitations
 
+#### Request bodies
+
+Known-length BHTTP needs the whole request body before the request is sent, so the body is held in memory. A duplex
+body can't be encoded and throws `DuplexBodyException`.
+
 #### HTTP Fields encoding
 
 This library uses ASCII to encode and decode string data for URL and HTTP header fields and their values. It does not
