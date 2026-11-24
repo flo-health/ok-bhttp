@@ -12,7 +12,7 @@ in [Oblivious HTTP](https://datatracker.ietf.org/doc/draft-ietf-ohai-ohttp/).
 
 ```kotlin
 dependencies {
-    implementation("com.github.flohealth:ok-bhttp:0.1.0")
+    implementation("com.github.flohealth:ok-bhttp:0.2.0")
 }
 ```
 
