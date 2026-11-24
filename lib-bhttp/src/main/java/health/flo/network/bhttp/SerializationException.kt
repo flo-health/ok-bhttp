@@ -8,6 +8,10 @@ class DuplexBodyException : SerializationException("A duplex request body can't 
 
 class EndOfArrayException : SerializationException("Unable to read the next bytes from the array")
 
+class IntOverflowException(
+    number: Long,
+) : SerializationException("Number $number doesn't fit in Int")
+
 class UnknownFramingIndicatorException(
     indicator: Int,
 ) : SerializationException("Framing indicator $indicator is not supported")

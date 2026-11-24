@@ -24,11 +24,13 @@ internal fun ByteArrayReader.slice(sliceSize: Int): ByteArrayReader = SliceByteA
 abstract class ByteArrayReaderBase : ByteArrayReader {
 
     protected fun throwWhenEndReached(offset: Int = 1) {
-        if (pointer + offset > size) {
+        if (!fits(offset)) {
             throw EndOfArrayException()
         }
     }
 }
+
+internal fun ByteArrayReader.fits(count: Int): Boolean = count in 0..(size - pointer)
 
 private class ByteArrayReaderImpl(
     private val array: ByteArray,
@@ -91,7 +93,9 @@ private class SliceByteArrayReader(
         }
 
     init {
-        throwWhenEndReached(sliceSize)
+        if (!reader.fits(sliceSize)) {
+            throw EndOfArrayException()
+        }
     }
 
     override fun read(count: Int): ByteArray {

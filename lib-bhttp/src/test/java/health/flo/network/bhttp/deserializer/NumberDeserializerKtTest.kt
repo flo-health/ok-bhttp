@@ -1,9 +1,13 @@
 package health.flo.network.bhttp.deserializer
 
+import health.flo.network.bhttp.IntOverflowException
 import health.flo.network.bhttp.parseHexEncodedByteArray
 import health.flo.test.extensions.toDynamicTests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 internal class NumberDeserializerKtTest {
 
@@ -28,6 +32,21 @@ internal class NumberDeserializerKtTest {
         val actual = reader.readNumber()
 
         assertThat(actual).isEqualTo(number)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "c000000080000000", // 2147483648
+            "c000000100000005", // 4294967301
+        ],
+    )
+    fun `readInt should throw IntOverflowException when number does not fit in Int`(encoded: String) {
+        val reader = ByteArrayReader.fromByteArray(encoded.parseHexEncodedByteArray())
+
+        assertThrows<IntOverflowException> {
+            reader.readInt()
+        }
     }
 
     private data class NumberTestData(
