@@ -69,6 +69,36 @@ internal class HttpRequestMapperTest {
     }
 
     @Test
+    fun `map should replace content type header with the body content type`() {
+        val request = Request.Builder()
+            .url(TEST_URL)
+            .header("content-type", "application/json")
+            .header("a", "b")
+            .post(TEST_BODY.toByteArray().toRequestBody(TEST_MEDIA_TYPE.toMediaType()))
+            .build()
+
+        val actual = sut.map(request)
+
+        assertThat(actual.headerSection.fieldLines).containsExactly(
+            FieldLine("a", "b"),
+            FieldLine("Content-Type", TEST_MEDIA_TYPE),
+        )
+    }
+
+    @Test
+    fun `map should keep content type header when body has no content type`() {
+        val request = Request.Builder()
+            .url(TEST_URL)
+            .header("Content-Type", TEST_MEDIA_TYPE)
+            .post(TEST_BODY.toByteArray().toRequestBody())
+            .build()
+
+        val actual = sut.map(request)
+
+        assertThat(actual.headerSection.fieldLines).containsExactly(FieldLine("Content-Type", TEST_MEDIA_TYPE))
+    }
+
+    @Test
     fun `map should keep order of repeated headers`() {
         val request = Request.Builder()
             .url(TEST_URL)
