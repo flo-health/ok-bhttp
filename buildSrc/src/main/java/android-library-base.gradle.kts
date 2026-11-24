@@ -4,12 +4,11 @@ import health.flo.network.gradle.configureSdk
 
 plugins {
     id("com.android.library")
-    kotlin("android")
 }
 
 android {
     configureSdk()
-    configureCompiler(tasks, kotlinOptions)
+    configureCompiler(project.tasks)
 
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -19,12 +18,12 @@ android {
     }
 
     buildFeatures {
-        aidl = false
-        renderScript = false
         shaders = false
     }
+}
 
-    kotlinOptions {
+kotlin {
+    compilerOptions {
         allWarningsAsErrors = Environment.isCI
     }
 }
