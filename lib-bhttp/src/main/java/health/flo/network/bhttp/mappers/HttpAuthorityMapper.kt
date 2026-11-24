@@ -5,6 +5,12 @@ import okhttp3.HttpUrl
 internal class HttpAuthorityMapper {
 
     fun map(httpUrl: HttpUrl): String {
-        return "${httpUrl.host}:${httpUrl.port}"
+        // HttpUrl.host drops the brackets of an IPv6 address.
+        val host = when (':' in httpUrl.host) {
+            true -> "[${httpUrl.host}]"
+            false -> httpUrl.host
+        }
+
+        return "$host:${httpUrl.port}"
     }
 }
