@@ -5,5 +5,5 @@ import java.nio.charset.Charset
 internal object BhttpDefaults {
 
     val charset: Charset
-        get() = Charsets.US_ASCII
+        get() = Charsets.UTF_8
 }

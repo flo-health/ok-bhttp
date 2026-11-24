@@ -12,6 +12,7 @@ internal class StringDeserializerKtTest {
         StringTestData("https", "05" + "6874747073"),
         StringTestData("www.example.com", "0f" + "7777772e6578616d706c652e636f6d"),
         StringTestData("", "00"),
+        StringTestData("café", "05" + "636166c3a9"),
     ).toDynamicTests { (expected, encoded) ->
         val reader = ByteArrayReader.fromByteArray(encoded.parseHexEncodedByteArray())
 
