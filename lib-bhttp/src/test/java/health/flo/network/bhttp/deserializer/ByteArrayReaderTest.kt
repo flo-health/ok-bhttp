@@ -23,6 +23,21 @@ internal class SliceByteArrayReaderTest : ByteArrayReaderTest() {
     override val sut = ByteArrayReader.fromByteArray(array)
         .apply { read(1) }
         .slice(ARRAY_SIZE)
+
+    @Test
+    fun `read should not read past slice end when parent has more bytes`() {
+        val parent = ByteArrayReader.fromByteArray(byteArrayOf(1, 2, 3, 4))
+        val slice = parent.slice(2)
+
+        slice.read(2)
+
+        assertThat(slice.canRead).isFalse()
+        assertThat(slice.firstByteOrNull).isNull()
+        assertThat(parent.canRead).isTrue()
+        assertThrows<EndOfArrayException> {
+            slice.read(1)
+        }
+    }
 }
 
 internal abstract class ByteArrayReaderTest {
