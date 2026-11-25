@@ -33,4 +33,34 @@ internal class HttpResponseContentTypeMapperTest {
 
         assertThat(actual).isEqualTo(expected)
     }
+
+    @Test
+    fun `map should find content type header ignoring name case`() {
+        val headers = FieldSection(
+            listOf(
+                FieldLine(name = "x-a", value = "b"),
+                FieldLine(name = "CONTENT-TYPE", value = TEST_MEDIA_TYPE),
+            ),
+        )
+        val expected = TEST_MEDIA_TYPE.toMediaType()
+
+        val actual = sut.map(headers)
+
+        assertThat(actual).isEqualTo(expected)
+    }
+
+    @Test
+    fun `map should return the first content type header`() {
+        val headers = FieldSection(
+            listOf(
+                FieldLine(name = "Content-Type", value = TEST_MEDIA_TYPE),
+                FieldLine(name = "Content-Type", value = "text/plain"),
+            ),
+        )
+        val expected = TEST_MEDIA_TYPE.toMediaType()
+
+        val actual = sut.map(headers)
+
+        assertThat(actual).isEqualTo(expected)
+    }
 }
