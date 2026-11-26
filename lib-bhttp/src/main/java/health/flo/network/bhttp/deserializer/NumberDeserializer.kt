@@ -1,5 +1,6 @@
 package health.flo.network.bhttp.deserializer
 
+import health.flo.network.bhttp.IntOverflowException
 import health.flo.network.bhttp.model.IntegerLength
 import health.flo.network.bhttp.model.IntegerLength.BYTE
 import health.flo.network.bhttp.model.IntegerLength.INT
@@ -21,7 +22,14 @@ internal fun ByteArrayReader.readNumber(): Number {
     }
 }
 
-internal fun ByteArrayReader.readInt() = readNumber().toInt()
+internal fun ByteArrayReader.readInt(): Int {
+    val number = readNumber().toLong()
+    if (number > Int.MAX_VALUE) {
+        throw IntOverflowException(number)
+    }
+
+    return number.toInt()
+}
 
 private fun ByteArray.eraseLengthBits(): ByteArray {
     this[0] = this[0].eraseLengthBits()

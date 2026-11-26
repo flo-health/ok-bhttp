@@ -12,7 +12,7 @@ in [Oblivious HTTP](https://datatracker.ietf.org/doc/draft-ietf-ohai-ohttp/).
 
 ```kotlin
 dependencies {
-    implementation("com.github.flohealth:ok-bhttp:0.1.0")
+    implementation("com.github.flohealth:ok-bhttp:0.2.0")
 }
 ```
 
@@ -80,18 +80,23 @@ Known-Length_ Messages only and two possible translations that are required by c
 
 ## Limitations
 
+#### Request bodies
+
+Known-length BHTTP needs the whole request body before the request is sent, so the body is held in memory. A duplex
+body can't be encoded and throws `DuplexBodyException`.
+
 #### HTTP Fields encoding
 
-This library uses ASCII to encode and decode string data for URL and HTTP header fields and their values. It does not
-implement automatic encoding of any non-ASCII characters into ASCII and will throw an error if it encounters any. In
-particular:
+This library encodes and decodes the request control data and header fields as UTF-8, as OkHttp does on a direct call.
+In particular:
 
-- If a non-ASCII character is encountered in the URL or a header field (field name or value) of an `URLRequest`
-  , `RequestCreationError` will be thrown, indicating the point of failure
-- If header data of a response cannot be decoded into String using ASCII, `BinaryHTTPDecodingError.asciiDecodingError`
-  will be thrown
-  If you still need to pass non-ASCII values, encode them into ASCII **before** calling this library. For example, use
-  percent-encoding for request URLs, etc.
+- A header value that isn't ASCII, such as `café`, goes through as its UTF-8 bytes in both directions. Response
+  headers are added with `Headers.Builder.addUnsafeNonAscii`, so OkHttp accepts them.
+- In a response, bytes that aren't valid UTF-8 become U+FFFD, as on a direct call.
+- A request string with a lone surrogate can't be encoded and throws `UnencodableCharacterException`.
+
+A response fails with `InvalidHeaderException` when a header name isn't ASCII, since OkHttp accepts only ASCII names,
+or when a header value has CR, LF or NUL.
 
 ## License
 

@@ -25,6 +25,25 @@ internal class SliceByteArrayReaderTest : ByteArrayReaderTest() {
         .slice(ARRAY_SIZE)
 
     @Test
+    fun `slice should throw EndOfArrayException when slice is longer than remaining bytes`() {
+        val parent = ByteArrayReader.fromByteArray(byteArrayOf(1, 2, 3)).apply { read(1) }
+
+        assertThrows<EndOfArrayException> {
+            parent.slice(3)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [-1, Int.MAX_VALUE])
+    fun `slice should throw EndOfArrayException when slice size is negative or overflows`(sliceSize: Int) {
+        val parent = ByteArrayReader.fromByteArray(byteArrayOf(1, 2, 3)).apply { read(1) }
+
+        assertThrows<EndOfArrayException> {
+            parent.slice(sliceSize)
+        }
+    }
+
+    @Test
     fun `read should not read past slice end when parent has more bytes`() {
         val parent = ByteArrayReader.fromByteArray(byteArrayOf(1, 2, 3, 4))
         val slice = parent.slice(2)
@@ -71,6 +90,16 @@ internal abstract class ByteArrayReaderTest {
     @ParameterizedTest
     @ValueSource(ints = [11, 16])
     fun `read should throw EndOfArrayException on attempt to read too many bytes`(bytesToRead: Int) {
+        assertThrows<EndOfArrayException> {
+            sut.read(bytesToRead)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [-1, Int.MAX_VALUE])
+    fun `read should throw EndOfArrayException when count is negative or overflows`(bytesToRead: Int) {
+        sut.read(1)
+
         assertThrows<EndOfArrayException> {
             sut.read(bytesToRead)
         }

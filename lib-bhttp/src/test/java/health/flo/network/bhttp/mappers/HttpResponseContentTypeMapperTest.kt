@@ -50,11 +50,11 @@ internal class HttpResponseContentTypeMapperTest {
     }
 
     @Test
-    fun `map should return the first content type header`() {
+    fun `map should return the last content type header as OkHttp does`() {
         val headers = FieldSection(
             listOf(
-                FieldLine(name = "Content-Type", value = TEST_MEDIA_TYPE),
                 FieldLine(name = "Content-Type", value = "text/plain"),
+                FieldLine(name = "Content-Type", value = TEST_MEDIA_TYPE),
             ),
         )
         val expected = TEST_MEDIA_TYPE.toMediaType()
@@ -62,5 +62,14 @@ internal class HttpResponseContentTypeMapperTest {
         val actual = sut.map(headers)
 
         assertThat(actual).isEqualTo(expected)
+    }
+
+    @Test
+    fun `map should return null for a malformed content type`() {
+        val headers = FieldSection(listOf(FieldLine(name = "Content-Type", value = "not a media type")))
+
+        val actual = sut.map(headers)
+
+        assertThat(actual).isNull()
     }
 }

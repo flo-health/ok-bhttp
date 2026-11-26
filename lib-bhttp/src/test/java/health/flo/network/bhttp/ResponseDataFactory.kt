@@ -55,4 +55,39 @@ internal object ResponseDataFactory {
         // Trailer section (truncated - only 00 length is present)
         "00",
     ).joinToString(separator = "")
+
+    fun knownLengthResponseWithoutTrailerSectionHex(): String = listOf(
+        // Framing indicator:
+        "01",
+
+        // Response control data:
+        "40c8", // Status code(200)
+
+        // Header section:
+        "00", // Header section length (0)
+
+        // Content:
+        "04", // Content length (4)
+        "74657874", // Content (text)
+
+        // Trailer section omitted
+    ).joinToString(separator = "")
+
+    fun knownLengthResponseWithoutContentAndTrailerSectionHex(): String = listOf(
+        // Framing indicator:
+        "01",
+
+        // Response control data:
+        "40c8", // Status code(200)
+
+        // Header section:
+        "0c", // Header section length (12)
+        // Field line:
+        "06", // Name length(6)
+        "686561646572", // Name(header)
+        "04", // Value length (4)
+        "74657874", // Value(text)
+
+        // Content and trailer section omitted
+    ).joinToString(separator = "")
 }

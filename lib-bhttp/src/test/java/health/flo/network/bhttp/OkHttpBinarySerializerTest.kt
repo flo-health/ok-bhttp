@@ -1,5 +1,6 @@
 package health.flo.network.bhttp
 
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
@@ -36,6 +37,104 @@ internal class OkHttpBinarySerializerTest {
         val actual = sut.serialize(request)
 
         assertThat(actual.data.hexEncodedString()).isEqualTo(expected)
+    }
+
+    @Test
+    fun `serialize should encode a header value that is not ASCII as UTF-8`() {
+        val headers = Headers.Builder()
+            .addUnsafeNonAscii("a", "café")
+            .build()
+        val nonAsciiRequest = request.newBuilder()
+            .headers(headers)
+            .build()
+        val expectedHeaderSection = "08" + "01" + "61" + "05" + "636166c3a9" // a: café
+
+        val actual = sut.serialize(nonAsciiRequest)
+
+        assertThat(actual.data.hexEncodedString()).contains(expectedHeaderSection)
+    }
+
+    @Test
+    fun `deserialize should decode a header value that is not ASCII as UTF-8`() {
+        val responseHex = listOf(
+            "01", // Framing indicator
+            "40c8", // Status code (200)
+            "08", // Header section length (8)
+            "01", "61", // Name (a)
+            "05", "636166c3a9", // Value (café)
+            "00", // Content length (0)
+            "00", // Trailer section length (0)
+        ).joinToString(separator = "")
+
+        val actual = sut.deserialize(responseBinaryData(responseHex), Protocol.HTTP_1_1, request)
+
+        assertThat(actual.header("a")).isEqualTo("café")
+    }
+
+    @Test
+    fun `deserialize should replace bytes that are not valid UTF-8 as OkHttp does`() {
+        val responseHex = listOf(
+            "01", // Framing indicator
+            "40c8", // Status code (200)
+            "07", // Header section length (7)
+            "01", "61", // Name (a)
+            "04", "636166e9", // Value (caf and a Latin-1 é)
+            "00", // Content length (0)
+            "00", // Trailer section length (0)
+        ).joinToString(separator = "")
+
+        val actual = sut.deserialize(responseBinaryData(responseHex), Protocol.HTTP_1_1, request)
+
+        assertThat(actual.header("a")).isEqualTo("caf\uFFFD")
+    }
+
+    @Test
+    fun `serialize should throw UnencodableCharacterException for a lone surrogate in a header`() {
+        val headers = Headers.Builder()
+            .addUnsafeNonAscii("a", "a\uD800")
+            .build()
+        val malformedRequest = request.newBuilder()
+            .headers(headers)
+            .build()
+
+        assertThrows<UnencodableCharacterException> {
+            sut.serialize(malformedRequest)
+        }
+    }
+
+    @Test
+    fun `deserialize should throw InvalidHeaderException for a header name that is not ASCII`() {
+        val responseHex = listOf(
+            "01", // Framing indicator
+            "40c8", // Status code (200)
+            "05", // Header section length (5)
+            "02", "c3a9", // Name (é)
+            "01", "62", // Value (b)
+            "00", // Content length (0)
+            "00", // Trailer section length (0)
+        ).joinToString(separator = "")
+
+        assertThrows<InvalidHeaderException> {
+            sut.deserialize(responseBinaryData(responseHex), Protocol.HTTP_1_1, request)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["0d", "0a", "00"])
+    fun `deserialize should throw InvalidHeaderException for CR, LF or NUL in a header value`(charHex: String) {
+        val responseHex = listOf(
+            "01", // Framing indicator
+            "40c8", // Status code (200)
+            "06", // Header section length (6)
+            "01", "61", // Name (a)
+            "03", "61", charHex, "62", // Value (a, the character, b)
+            "00", // Content length (0)
+            "00", // Trailer section length (0)
+        ).joinToString(separator = "")
+
+        assertThrows<InvalidHeaderException> {
+            sut.deserialize(responseBinaryData(responseHex), Protocol.HTTP_1_1, request)
+        }
     }
 
     @Test

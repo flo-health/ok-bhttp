@@ -16,10 +16,15 @@ internal class HttpRequestMapper(
         val content: ByteArray = request.body?.let(httpBodyMapper::map) ?: byteArrayOf()
         val contentTypeHeader = request.body?.contentType()
             ?.let(httpRequestContentTypeMapper::map)
+        // The body's content type replaces the header, as OkHttp does on a direct call.
+        val headers = when (contentTypeHeader) {
+            null -> request.headers
+            else -> request.headers.newBuilder().removeAll(contentTypeHeader.name).build()
+        }
 
         return KnownLengthRequest(
             requestControlData = requestControlDataMapper.map(request),
-            headerSection = httpHeadersMapper.map(request.headers) + listOfNotNull(contentTypeHeader),
+            headerSection = httpHeadersMapper.map(headers) + listOfNotNull(contentTypeHeader),
             content = content,
             trailerSection = empty(),
         )
